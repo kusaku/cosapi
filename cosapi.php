@@ -4,17 +4,18 @@ namespace COS;
 
 class CosApi {
 
-	protected $tea;
+	private $tea;
 	private $name;
 	private $server;
 	private $port;
 	private $username;
 	private $password;
+	private $storage;
 
 	private $socket;
 
 	protected $flag = 0XFFFFFFFF;
-	protected $token;
+	protected $rsa_key;
 
 	private function get_rsa_key() {
 		static $rsa_key;
@@ -52,11 +53,11 @@ class CosApi {
 		return $rsa_key_public;
 	}
 
-	private function get_token() {
-		static $storage;
-		if (!$storage) {
-			$storage = Table::instance('cosapi')->load(array('@name=?', $this->name));
-			if (!$storage) {
+	private function key() {
+		static $key;
+		if (!$this->rsa_key) {
+			$key = $this->storage->load(array('@name=?', $this->name));
+			if (!$key) {
 
 				$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()));
 				$packet  = json_encode(array("major" => 0, "minor" => 1, "payload" => $payload));
@@ -66,18 +67,18 @@ class CosApi {
 
 				$payload = json_decode(json_decode($packet)->payload);
 
-				openssl_private_decrypt(base64_decode($payload->rsaencryptkey), $token, $this->get_rsa_key());
+				openssl_private_decrypt(base64_decode($payload->rsaencryptkey), $rsa_key, $this->get_rsa_key());
 
-				$storage = Table::instance('cosapi');
-				$storage->insert();
-				$storage->name  = $this->name;
-				$storage->flag  = $payload->flag;
-				$storage->token = $token;
-				$storage->save();
+				$key = $this->storage;
+				$key->insert();
+				$key->name  = $this->name;
+				$key->flag  = $payload->flag;
+				$key->token = $rsa_key;
+				$key->save();
 			}
 		}
 
-		return $storage;
+		return $key;
 	}
 
 	protected function get_authcode() {
@@ -98,7 +99,7 @@ class CosApi {
 		if ($this instanceof CosAdminAction) {
 			$data = array(
 				'major'   => 0,
-				'minor'   => 33,
+				'minor'   => 3,
 				'payload' => json_encode(
 					array(
 						'uid'          => -1,
@@ -107,12 +108,12 @@ class CosApi {
 			);
 		}
 
-		$packet = $this->tea->encrypt(json_encode($data), $this->token);
+		$packet = $this->tea->encrypt(json_encode($data), $this->rsa_key);
 
 		$this->write($packet);
 		$packet = $this->read();
 
-		$data     = json_decode($this->tea->decrypt($packet, $this->token));
+		$data     = json_decode($this->tea->decrypt($packet, $this->rsa_key));
 		$authcode = json_decode($data->payload)->authcode;
 
 		return "{$webuniquekey}|{$authcode}";
@@ -126,12 +127,12 @@ class CosApi {
 			'authcode' => $this->get_authcode()
 		);
 
-		$packet = $this->tea->encrypt(json_encode($data), $this->token);
+		$packet = $this->tea->encrypt(json_encode($data), $this->rsa_key);
 
 		$this->write($packet);
 		$packet = $this->read();
 
-		$data = json_decode($this->tea->decrypt($packet, $this->token));
+		$data = json_decode($this->tea->decrypt($packet, $this->rsa_key));
 
 		if ($data->major != $major || $data->minor != $minor) {
 			throw new \Exception('Protocol API mismatch');
@@ -191,17 +192,18 @@ class CosApi {
 				throw new \Exception("Socket error!");
 			}
 
-			$this->flag  = $this->get_token()->flag;
-			$this->token = $this->get_token()->token;
+			$this->flag    = $this->key()->flag;
+			$this->rsa_key = $this->key()->rsa_key;
 		}
 	}
 
-	public function __construct($name, $cfg) {
+	public function __construct($name, $cfg, $storage) {
 		$this->name     = $name;
 		$this->server   = $cfg['server'];
 		$this->port     = $cfg['port'];
 		$this->username = $cfg['username'];
 		$this->password = $cfg['password'];
+		$this->storage  = $storage;
 		$this->init();
 		$this->tea = new \Helpers\Tea();
 	}
