@@ -10,7 +10,44 @@ namespace COS;
 
 class CosGameAction extends CosApi {
 
-	/// Platform API
+	/**
+	 * Check user credential
+	 * $result->uid = -1 - wrong username
+	 * $result->uid = -2 - wrong password
+	 * normal:
+	 * object(stdClass)#22 (12) {
+	 * ["uid"]=>
+	 * int(80235546)
+	 * ["nickname"]=>
+	 * string(16) "西里尔雕塑家"
+	 * ["firstname"]=>
+	 * string(0) ""
+	 * ["lastname"]=>
+	 * string(0) ""
+	 * ["telephone"]=>
+	 * string(0) ""
+	 * ["emailverified"]=>
+	 * int(0)
+	 * ["subscribenews"]=>
+	 * int(0)
+	 * ["regip"]=>
+	 * string(12) "192.168.0.90"
+	 * ["token"]=>
+	 * string(32) "xdznjv1hlqczvhh690d09j7x4fgrnv7r"
+	 * ["expiretimestamp"]=>
+	 * int(1393958926)
+	 * ["createTime"]=>
+	 * string(10) "1393871340"
+	 * ["updateTime"]=>
+	 * string(10) "1393871340"
+	 * }
+	 *
+	 * @param $username
+	 * @param $userpwd
+	 * @param $fromip
+	 *
+	 * @return \stdClass
+	 */
 	public function UserCheck($username, $userpwd, $fromip) {
 		$result = $this->exec(1, 1, array(
 			'username' => $username,
@@ -20,6 +57,8 @@ class CosGameAction extends CosApi {
 
 		return $result;
 	}
+
+	/// Platform API
 
 	public function RegUser($username, $userpwd, $nickname, $subscribenews, $adfrom, $regip) {
 		$result = $this->exec(1, 2, array(
@@ -177,11 +216,11 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function AccountLogout($uid, $fromip, $token) {
+	public function AccountLogout($uid, $token, $fromip) {
 		$result = $this->exec(1, 17, array(
-			'uid'    => $uid,
-			'fromip' => $fromip,
-			'token'  => $token
+			'uid'   => $uid,
+			'token' => $token,
+			'fromip' => $fromip
 		));
 
 		return $result;

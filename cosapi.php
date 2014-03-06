@@ -4,7 +4,6 @@ namespace COS;
 
 class CosApi {
 
-	private $tea;
 	private $name;
 	private $server;
 	private $port;
@@ -14,8 +13,16 @@ class CosApi {
 
 	private $socket;
 
-	protected $flag = 0XFFFFFFFF;
-	protected $rsa_key;
+	private $flag = 0XFFFFFFFF;
+	private $rsa_key;
+
+	private function encrypt($str) {
+		return bin2hex($str ^ str_pad('', strlen($str), hex2bin($this->rsa_key)));
+	}
+
+	private function decrypt($srt) {
+		return hex2bin($srt) ^ hex2bin(str_pad('', strlen($srt), $this->rsa_key));
+	}
 
 	private function get_rsa_key() {
 		static $rsa_key;
@@ -71,9 +78,9 @@ class CosApi {
 
 				$key = $this->storage;
 				$key->insert();
-				$key->name  = $this->name;
-				$key->flag  = $payload->flag;
-				$key->token = $rsa_key;
+				$key->name    = $this->name;
+				$key->flag    = $payload->flag;
+				$key->rsa_key = $rsa_key;
 				$key->save();
 			}
 		}
@@ -84,36 +91,32 @@ class CosApi {
 	protected function get_authcode() {
 		$webuniquekey = md5(uniqid(rand(), true));
 
+		$data = array(
+			'major'   => 0,
+			'minor'   => 0,
+			'payload' => json_encode(
+				array(
+					'uid'          => -1,
+					'webuniquekey' => $webuniquekey
+				))
+		);
+
 		if ($this instanceof CosGameAction) {
-			$data = array(
-				'major'   => 1,
-				'minor'   => 13,
-				'payload' => json_encode(
-					array(
-						'uid'          => -1,
-						'webuniquekey' => $webuniquekey
-					))
-			);
+			$data['major'] = 1;
+			$data['minor'] = 13;
 		}
 
 		if ($this instanceof CosAdminAction) {
-			$data = array(
-				'major'   => 0,
-				'minor'   => 3,
-				'payload' => json_encode(
-					array(
-						'uid'          => -1,
-						'webuniquekey' => $webuniquekey
-					))
-			);
+			$data['major'] = 0;
+			$data['minor'] = 3;
 		}
 
-		$packet = $this->tea->encrypt(json_encode($data), $this->rsa_key);
+		$packet = $this->encrypt(json_encode($data));
 
 		$this->write($packet);
 		$packet = $this->read();
 
-		$data     = json_decode($this->tea->decrypt($packet, $this->rsa_key));
+		$data     = json_decode($this->decrypt($packet));
 		$authcode = json_decode($data->payload)->authcode;
 
 		return "{$webuniquekey}|{$authcode}";
@@ -127,27 +130,27 @@ class CosApi {
 			'authcode' => $this->get_authcode()
 		);
 
-		$packet = $this->tea->encrypt(json_encode($data), $this->rsa_key);
+		$packet = $this->encrypt(json_encode($data));
 
 		$this->write($packet);
 		$packet = $this->read();
 
-		$data = json_decode($this->tea->decrypt($packet, $this->rsa_key));
+		$data = json_decode($this->decrypt($packet));
 
 		if ($data->major != $major || $data->minor != $minor) {
-			throw new \Exception('Protocol API mismatch');
+			throw new \Exception("Protocol API error! ({$data->major} != {$major} || {$data->minor} != {$minor})");
 		}
 
 		return json_decode($data->payload);
 	}
 
-	public function read() {
+	protected function read() {
 		socket_recv($this->socket, $bytes, 4, MSG_WAITALL);
 		$length = unpack('Nlength', $bytes)['length'];
 		socket_recv($this->socket, $binpacket, $length, MSG_WAITALL);
-		$packet = unpack('Nflag/nlength/a*data', $binpacket);
+		$packet = unpack("Nflag/nlength/a*data", $binpacket);
 		if ($packet['flag'] != $this->flag) {
-			//throw new \Exception("Packet flag mismatch! ({$packet['flag']} != {$this->flag})");
+			throw new \Exception("Packet flag mismatch! ({$packet['flag']} != {$this->flag})");
 		}
 		if ($packet['length'] != $length = strlen($packet['data'])) {
 			throw new \Exception("Packet length mismatch!  ({$packet['length']} != {$length})");
@@ -156,18 +159,20 @@ class CosApi {
 		return $packet['data'];
 	}
 
-	public function write($packet) {
+	protected function write($packet) {
 		$binpacket = pack('N', $this->flag) . $packet;
 		$binpacket = pack('N', strlen($binpacket)) . $binpacket;
 		socket_send($this->socket, $binpacket, strlen($binpacket), MSG_WAITALL);
 	}
 
-	public function init() {
+	protected function init() {
 		if (!isset($this->socket)) {
 			$this->socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 			$status       = socket_connect($this->socket, $this->server, $this->port);
 			if (!$status) {
-				throw new \Exception("Socket error!");
+				$errnum = socket_last_error($this->socket);
+				$error  = socket_strerror($errnum);
+				throw new \Exception($error, $errnum);
 			}
 
 			$binpacket = pack('n', strlen($this->username)) . $this->username . pack('n', strlen($this->password)) . $this->password;
@@ -177,7 +182,9 @@ class CosApi {
 			socket_recv($this->socket, $bytes, 4, MSG_WAITALL);
 
 			if ($bytes === null) {
-				throw new \Exception("Socket auth fail!");
+				$errnum = socket_last_error($this->socket);
+				$error  = socket_strerror($errnum);
+				throw new \Exception($error, $errnum);
 			}
 
 			$length = unpack('Nlength', $bytes)['length'];
@@ -185,11 +192,11 @@ class CosApi {
 			$packet = unpack('nsize/a' . unpack('n', $binpacket)[1] . 'login/Nsocket_id', $binpacket);
 
 			if ($packet['login'] != $this->username) {
-				throw new \Exception("Username mismatch!");
+				throw new \Exception("Username mismatch! ({$packet['login']} != {$this->username})");
 			}
 
 			if (!$packet['socket_id'] > 0) {
-				throw new \Exception("Socket error!");
+				throw new \Exception("Server socket error! ({$packet['socket_id']})");
 			}
 
 			$this->flag    = $this->key()->flag;
@@ -205,7 +212,6 @@ class CosApi {
 		$this->password = $cfg['password'];
 		$this->storage  = $storage;
 		$this->init();
-		$this->tea = new \Helpers\Tea();
 	}
 
 	public function __destruct() {
