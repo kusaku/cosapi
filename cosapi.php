@@ -61,8 +61,10 @@ class CosApi {
 	}
 
 	private function key() {
+		/** @var $key \DB\Jig\Mapper */
 		static $key;
-		if (!$this->rsa_key) {
+
+		if (!$key) {
 			$key = $this->storage->load(array('@name=?', $this->name));
 			if (!$key) {
 
@@ -150,7 +152,7 @@ class CosApi {
 		socket_recv($this->socket, $binpacket, $length, MSG_WAITALL);
 		$packet = unpack("Nflag/nlength/a*data", $binpacket);
 		if ($packet['flag'] != $this->flag) {
-			throw new \Exception("Packet flag mismatch! ({$packet['flag']} != {$this->flag})");
+			//throw new \Exception("Packet flag mismatch! ({$packet['flag']} != {$this->flag})");
 		}
 		if ($packet['length'] != $length = strlen($packet['data'])) {
 			throw new \Exception("Packet length mismatch!  ({$packet['length']} != {$length})");
