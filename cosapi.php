@@ -14,14 +14,13 @@ class CosApi {
 	private $socket;
 
 	private $flag = 0XFFFFFFFF;
-	private $rsa_key;
 
 	private function encrypt($str) {
-		return bin2hex($str ^ str_pad('', strlen($str), hex2bin($this->rsa_key)));
+		return bin2hex($str ^ str_pad('', strlen($str), hex2bin($this->rsa_key())));
 	}
 
 	private function decrypt($srt) {
-		return hex2bin($srt) ^ hex2bin(str_pad('', strlen($srt), $this->rsa_key));
+		return hex2bin($srt) ^ hex2bin(str_pad('', strlen($srt), $this->rsa_key()));
 	}
 
 	private function get_rsa_key() {
@@ -60,34 +59,41 @@ class CosApi {
 		return $rsa_key_public;
 	}
 
-	private function key() {
+	private function rsa_key($force = false) {
 		/** @var $key \DB\Jig\Mapper */
 		static $key;
 
-		if (!$key) {
+		if ($force || !$key) {
 			$key = $this->storage->load(array('@name=?', $this->name));
-			if (!$key) {
-
+			if ($force || !$key) {
 				$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()));
-				$packet  = json_encode(array("major" => 0, "minor" => 1, "payload" => $payload));
+				$packet  = json_encode(array('major' => 0, 'minor' => 1, 'payload' => $payload));
+
+				$this->flag = $flag = 0XFFFFFFFF;
 
 				$this->write($packet);
 				$packet = $this->read();
 
 				$payload = json_decode(json_decode($packet)->payload);
 
-				openssl_private_decrypt(base64_decode($payload->rsaencryptkey), $rsa_key, $this->get_rsa_key());
+				openssl_private_decrypt(base64_decode($payload->rsaencryptkey), $value, $this->get_rsa_key());
 
 				$key = $this->storage;
 				$key->insert();
-				$key->name    = $this->name;
-				$key->flag    = $payload->flag;
-				$key->rsa_key = $rsa_key;
+				$key->name  = $this->name;
+				$key->flag  = $payload->flag;
+				$key->value = $value;
 				$key->save();
 			}
+
+			$this->flag = $key->flag;
 		}
 
-		return $key;
+		return $key->value;
+	}
+
+	private function update_rsa_key() {
+		$this->rsa_key(true);
 	}
 
 	protected function get_authcode() {
@@ -125,11 +131,18 @@ class CosApi {
 	}
 
 	protected function exec($major, $minor, $payload) {
+		try {
+			$authcode = $this->get_authcode();
+		} catch (\Exception $e) {
+			$this->update_rsa_key();
+			$authcode = $this->get_authcode();
+		}
+
 		$data = array(
 			'major'    => $major,
 			'minor'    => $minor,
 			'payload'  => json_encode($payload),
-			'authcode' => $this->get_authcode()
+			'authcode' => $authcode
 		);
 
 		$packet = $this->encrypt(json_encode($data));
@@ -151,11 +164,11 @@ class CosApi {
 		$length = unpack('Nlength', $bytes)['length'];
 		socket_recv($this->socket, $binpacket, $length, MSG_WAITALL);
 		$packet = unpack("Nflag/nlength/a*data", $binpacket);
-		if ($packet['flag'] != $this->flag) {
-			//throw new \Exception("Packet flag mismatch! ({$packet['flag']} != {$this->flag})");
+		if ($packet['flag'] != $this->flag && $packet['flag'] != 0XFFFFFFFF && $this->flag != 0XFFFFFFFF) {
+			throw new \Exception("Flag mismatch! ({$packet['flag']} != {$this->flag})");
 		}
 		if ($packet['length'] != $length = strlen($packet['data'])) {
-			throw new \Exception("Packet length mismatch!  ({$packet['length']} != {$length})");
+			throw new \Exception("Packet length mismatch! ({$packet['length']} != {$length})");
 		}
 
 		return $packet['data'];
@@ -200,9 +213,6 @@ class CosApi {
 			if (!$packet['socket_id'] > 0) {
 				throw new \Exception("Server socket error! ({$packet['socket_id']})");
 			}
-
-			$this->flag    = $this->key()->flag;
-			$this->rsa_key = $this->key()->rsa_key;
 		}
 	}
 
