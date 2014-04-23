@@ -10,45 +10,32 @@ namespace COS;
 
 class CosGameAction extends CosApi {
 
-	/**
-	 * Check user credential
-	 * $result->uid = -1 - wrong username
-	 * $result->uid = -2 - wrong password
-	 * normal:
-	 * object(stdClass)#22 (12) {
-	 * ["uid"]=>
-	 * int(80235546)
-	 * ["nickname"]=>
-	 * string(16) "西里尔雕塑家"
-	 * ["firstname"]=>
-	 * string(0) ""
-	 * ["lastname"]=>
-	 * string(0) ""
-	 * ["telephone"]=>
-	 * string(0) ""
-	 * ["emailverified"]=>
-	 * int(0)
-	 * ["subscribenews"]=>
-	 * int(0)
-	 * ["regip"]=>
-	 * string(12) "192.168.0.90"
-	 * ["token"]=>
-	 * string(32) "xdznjv1hlqczvhh690d09j7x4fgrnv7r"
-	 * ["expiretimestamp"]=>
-	 * int(1393958926)
-	 * ["createTime"]=>
-	 * string(10) "1393871340"
-	 * ["updateTime"]=>
-	 * string(10) "1393871340"
-	 * }
-	 *
-	 * @param $username
-	 * @param $userpwd
-	 * @param $fromip
-	 *
-	 * @return \stdClass
-	 */
-	public function UserCheck($username, $userpwd, $fromip) {
+	public function SecuritySymmetricKeyExchange($rsamodule, $rsapublic) {
+		$result = $this->exec(0, 1, array(
+			'rsamodule' => $rsamodule,
+			'rsapublic' => $rsapublic
+		));
+
+		return $result;
+	}
+
+	public function SecurityIDExchange($gameid) {
+		$result = $this->exec(0, 3, array(
+			'gameid' => $gameid
+		));
+
+		return $result;
+	}
+
+	public function SecurityRefreshConf() {
+		$result = $this->exec(0, 4, array(
+			'uid' => -1
+		));
+
+		return $result;
+	}
+
+	public function UserVerify($username, $userpwd, $fromip) {
 		$result = $this->exec(1, 1, array(
 			'username' => $username,
 			'userpwd'  => $userpwd,
@@ -58,34 +45,36 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	/// Platform API
-
-	public function RegUser($username, $userpwd, $nickname, $subscribenews, $adfrom, $regip) {
+	public function UserReg($username, $userpwd, $nickname, $subscribenews, $adfrom, $regip, $realname, $idcardno, $email, $cellphone) {
 		$result = $this->exec(1, 2, array(
 			'username'      => $username,
 			'userpwd'       => $userpwd,
 			'nickname'      => $nickname,
 			'subscribenews' => $subscribenews,
 			'adfrom'        => $adfrom,
-			'regip'         => $regip
+			'regip'         => $regip,
+			'realname'      => $realname,
+			'idcardno'      => $idcardno,
+			'email'         => $email,
+			'cellphone'     => $cellphone
 		));
 
 		return $result;
 	}
 
-	public function UserPasswordModify($uid, $useroldpwd, $usernewpwd, $token, $fromip) {
+	public function UserChgPwd($uid, $token, $olduserpwd, $newuserpwd, $fromip) {
 		$result = $this->exec(1, 3, array(
 			'uid'        => $uid,
-			'olduserpwd' => $useroldpwd,
-			'newuserpwd' => $usernewpwd,
 			'token'      => $token,
+			'olduserpwd' => $olduserpwd,
+			'newuserpwd' => $newuserpwd,
 			'fromip'     => $fromip
 		));
 
 		return $result;
 	}
 
-	public function AdminResetUserPassword($adminuid, $targetuid, $newuserpwd) {
+	public function UserResetPwd($adminuid, $targetuid, $newuserpwd) {
 		$result = $this->exec(1, 4, array(
 			'adminuid'   => $adminuid,
 			'targetuid'  => $targetuid,
@@ -95,7 +84,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function AdminResetUserNickname($adminuid, $targetuid, $newnickname) {
+	public function UserResetNickNam($adminuid, $targetuid, $newnickname) {
 		$result = $this->exec(1, 5, array(
 			'adminuid'    => $adminuid,
 			'targetuid'   => $targetuid,
@@ -105,7 +94,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function ModifyUserInfo($uid, $token, $fromip, $modifyitem = array()) {
+	public function UserModifyInfo($uid, $token, $fromip, $modifyitem = array()) {
 		$result = $this->exec(1, 6, array(
 			'uid'        => $uid,
 			'token'      => $token,
@@ -116,7 +105,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function GetUserRole($uid, $gameid, $token) {
+	public function UserGetRoleType($uid, $gameid, $token) {
 		$result = $this->exec(1, 7, array(
 			'uid'    => $uid,
 			'gameid' => $gameid,
@@ -126,7 +115,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function AdminModifyUserRole($adminuid, $targetuid, $gameid, $roletype) {
+	public function UserSetRoleType($adminuid, $targetuid, $gameid, $roletype) {
 		$result = $this->exec(1, 8, array(
 			'adminuid'  => $adminuid,
 			'targetuid' => $targetuid,
@@ -137,7 +126,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function PlatformLogin($type, $userinfo = array()) {
+	public function User3rdPlatform($type, $userinfo = array()) {
 		$result = $this->exec(1, 9, array(
 			'type'     => $type,
 			'userinfo' => $userinfo
@@ -146,7 +135,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function PlatformCurrencySwap($type, $currencyswap = array()) {
+	public function User3rdPlatformCurrencySwap($type, $currencyswap = array()) {
 		$result = $this->exec(1, 10, array(
 			'type'         => $type,
 			'currencyswap' => $currencyswap
@@ -155,7 +144,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function AdminModifyUserStatus($adminuid, $targetuid, $newaccountstatus) {
+	public function UserChgAccountStatus($adminuid, $targetuid, $newaccountstatus) {
 		$result = $this->exec(1, 11, array(
 			'adminuid'         => $adminuid,
 			'targetuid'        => $targetuid,
@@ -165,7 +154,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function CheckToken($uid, $token) {
+	public function UserVerifyToken($uid, $token) {
 		$result = $this->exec(1, 12, array(
 			'uid'   => $uid,
 			'token' => $token
@@ -174,17 +163,17 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function ByTokenGetAuthcode($uid, $token, $uniqidrand) {
+	public function UserGetAuthCode($uid, $token, $webuniquekey) {
 		$result = $this->exec(1, 13, array(
 			'uid'          => $uid,
 			'token'        => $token,
-			'webuniquekey' => $uniqidrand
+			'webuniquekey' => $webuniquekey
 		));
 
 		return $result;
 	}
 
-	public function AdminResetUsernamePassword($adminuid, $targetusername, $newuserpwd) {
+	public function UserResetPwdByUserName($adminuid, $targetusername, $newuserpwd) {
 		$result = $this->exec(1, 14, array(
 			'adminuid'       => $adminuid,
 			'targetusername' => $targetusername,
@@ -194,7 +183,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function AddPlayerVipTimeByUID($adminuid, $targetuid, $gameid, $addviptime) {
+	public function UserAddUserVipTime($adminuid, $targetuid, $gameid, $addviptime) {
 		$result = $this->exec(1, 15, array(
 			'adminuid'   => $adminuid,
 			'targetuid'  => $targetuid,
@@ -205,7 +194,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function AddPlayerVipTimeByUserName($adminuid, $targetusername, $gameid, $addviptime) {
+	public function UserAddUserVipTimeByUName($adminuid, $targetusername, $gameid, $addviptime) {
 		$result = $this->exec(1, 16, array(
 			'adminuid'       => $adminuid,
 			'targetusername' => $targetusername,
@@ -216,17 +205,17 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function AccountLogout($uid, $token, $fromip) {
+	public function UserUserLogout($uid, $fromip, $token) {
 		$result = $this->exec(1, 17, array(
-			'uid'   => $uid,
-			'token' => $token,
-			'fromip' => $fromip
+			'uid'    => $uid,
+			'fromip' => $fromip,
+			'token'  => $token
 		));
 
 		return $result;
 	}
 
-	public function TransPlatformUid($type, $userinfo = array()) {
+	public function UserGet3rdUserId($type, $userinfo = array()) {
 		$result = $this->exec(1, 18, array(
 			'type'     => $type,
 			'userinfo' => $userinfo
@@ -235,8 +224,51 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function ElectrumBalance($uid, $gameid, $token) {
+	public function UserModifyIDCardInfo($uid, $token, $fromip, $realname, $idcardno) {
 		$result = $this->exec(1, 19, array(
+			'uid'      => $uid,
+			'token'    => $token,
+			'fromip'   => $fromip,
+			'realname' => $realname,
+			'idcardno' => $idcardno
+		));
+
+		return $result;
+	}
+
+	public function UserModifyCellphone($uid, $token, $fromip, $cellphone) {
+		$result = $this->exec(1, 20, array(
+			'uid'       => $uid,
+			'token'     => $token,
+			'fromip'    => $fromip,
+			'cellphone' => $cellphone
+		));
+
+		return $result;
+	}
+
+	public function UserModifySecurity($uid, $token, $fromip, $cellphone) {
+		$result = $this->exec(1, 21, array(
+			'uid'       => $uid,
+			'token'     => $token,
+			'fromip'    => $fromip,
+			'cellphone' => $cellphone
+		));
+
+		return $result;
+	}
+
+	public function UserGetInfoByEMail($email, $fromip) {
+		$result = $this->exec(1, 22, array(
+			'email'  => $email,
+			'fromip' => $fromip
+		));
+
+		return $result;
+	}
+
+	public function ElectrumQuery($uid, $gameid, $token) {
+		$result = $this->exec(2, 1, array(
 			'uid'    => $uid,
 			'gameid' => $gameid,
 			'token'  => $token
@@ -245,28 +277,28 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function ElectrumAdd($uid, $gameid, $token, $amount, $orderid, $money, $ordertype) {
+	public function ElectrumInc($uid, $gameid, $token, $amount, $money, $orderid, $ordertype) {
 		$result = $this->exec(2, 2, array(
 			'uid'       => $uid,
 			'gameid'    => $gameid,
 			'token'     => $token,
 			'amount'    => $amount,
-			'orderid'   => $orderid,
 			'money'     => $money,
+			'orderid'   => $orderid,
 			'ordertype' => $ordertype
 		));
 
 		return $result;
 	}
 
-	public function ElectrumReduce($uid, $gameid, $token, $amount, $orderid, $money, $ordertype) {
+	public function ElectrumDec($uid, $gameid, $token, $amount, $money, $orderid, $ordertype) {
 		$result = $this->exec(2, 3, array(
 			'uid'       => $uid,
 			'gameid'    => $gameid,
 			'token'     => $token,
 			'amount'    => $amount,
-			'orderid'   => $orderid,
 			'money'     => $money,
+			'orderid'   => $orderid,
 			'ordertype' => $ordertype
 		));
 
@@ -281,35 +313,35 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function AdminElectrumAdd($uid, $gameid, $adminuid, $amount, $orderid, $money, $ordertype) {
+	public function ElectrumAdminInc($adminuid, $uid, $gameid, $amount, $money, $orderid, $ordertype) {
 		$result = $this->exec(2, 5, array(
+			'adminuid'  => $adminuid,
 			'uid'       => $uid,
 			'gameid'    => $gameid,
-			'adminuid'  => $adminuid,
 			'amount'    => $amount,
-			'orderid'   => $orderid,
 			'money'     => $money,
+			'orderid'   => $orderid,
 			'ordertype' => $ordertype
 		));
 
 		return $result;
 	}
 
-	public function AdminElectrumReduce($uid, $gameid, $adminuid, $amount, $orderid, $money, $ordertype) {
+	public function ElectrumAdminDec($adminuid, $uid, $gameid, $amount, $money, $orderid, $ordertype) {
 		$result = $this->exec(2, 6, array(
+			'adminuid'  => $adminuid,
 			'uid'       => $uid,
 			'gameid'    => $gameid,
-			'adminuid'  => $adminuid,
 			'amount'    => $amount,
-			'orderid'   => $orderid,
 			'money'     => $money,
+			'orderid'   => $orderid,
 			'ordertype' => $ordertype
 		));
 
 		return $result;
 	}
 
-	public function PerkGetAll($uid, $gameid, $token) {
+	public function PerkQuery($uid, $gameid, $token) {
 		$result = $this->exec(3, 1, array(
 			'uid'    => $uid,
 			'gameid' => $gameid,
@@ -330,18 +362,195 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function AdminPerkUnlock($uid, $gameid, $adminuid, $perkidlist = array()) {
+	public function PerkAdminUnlock($adminuid, $uid, $gameid, $perkidlist = array()) {
 		$result = $this->exec(3, 3, array(
+			'adminuid'   => $adminuid,
 			'uid'        => $uid,
 			'gameid'     => $gameid,
-			'adminuid'   => $adminuid,
 			'perkidlist' => $perkidlist
 		));
 
 		return $result;
 	}
 
-	public function CreateTimePeriodGiftID($serial, $gameid, $giftid, $usecount, $enabletime, $count, $len) {
+	public function GameVerify($serialize, $username, $authcode, $gameid) {
+		$result = $this->exec(4, 1, array(
+			'serialize' => $serialize,
+			'username'  => $username,
+			'authcode'  => $authcode,
+			'gameid'    => $gameid
+		));
+
+		return $result;
+	}
+
+	public function GameCheck($serialize, $username, $userpwd, $gameid) {
+		$result = $this->exec(4, 2, array(
+			'serialize' => $serialize,
+			'username'  => $username,
+			'userpwd'   => $userpwd,
+			'gameid'    => $gameid
+		));
+
+		return $result;
+	}
+
+	public function GameGetElectrum($serialize, $uid, $gameid) {
+		$result = $this->exec(4, 3, array(
+			'serialize' => $serialize,
+			'uid'       => $uid,
+			'gameid'    => $gameid
+		));
+
+		return $result;
+	}
+
+	public function GameChangeElectrum($serialize, $uid, $gameid, $type, $electrum) {
+		$result = $this->exec(4, 4, array(
+			'serialize' => $serialize,
+			'uid'       => $uid,
+			'gameid'    => $gameid,
+			'type'      => $type,
+			'electrum'  => $electrum
+
+		));
+
+		return $result;
+	}
+
+	public function GameGetPerkList($from, $serialize, $uid, $gameid) {
+		$result = $this->exec(4, 5, array(
+			'from'      => $from,
+			'serialize' => $serialize,
+			'uid'       => $uid,
+			'gameid'    => $gameid
+
+		));
+
+		return $result;
+	}
+
+	public function GameUnlockPerk($from, $serialize, $uid, $gameid, $perkid) {
+		$result = $this->exec(4, 6, array(
+			'from'      => $from,
+			'serialize' => $serialize,
+			'uid'       => $uid,
+			'gameid'    => $gameid,
+			'perkid'    => $perkid
+
+		));
+
+		return $result;
+	}
+
+	public function GameGetPayRank($serialize) {
+		$result = $this->exec(4, 6, array(
+			'serialize' => $serialize
+
+		));
+
+		return $result;
+	}
+
+	public function GameHeartBeat($timestamp) {
+		$result = $this->exec(4, 8, array(
+			'timestamp' => $timestamp
+		));
+
+		return $result;
+	}
+
+	public function GamePlayerLogin($instanceid, $gameid, $uid, $cid, $cname, $raceid, $classid, $level) {
+		$result = $this->exec(4, 9, array(
+			'instanceid' => $instanceid,
+			'gameid'     => $gameid,
+			'uid'        => $uid,
+			'cid'        => $cid,
+			'cname'      => $cname,
+			'raceid'     => $raceid,
+			'classid'    => $classid,
+			'level'      => $level
+
+		));
+
+		return $result;
+	}
+
+	public function GamePlayerLogout($instanceid, $gameid, $uid, $cid) {
+		$result = $this->exec(4, 10, array(
+			'instanceid' => $instanceid,
+			'gameid'     => $gameid,
+			'uid'        => $uid,
+			'cid'        => $cid
+
+		));
+
+		return $result;
+	}
+
+	public function GameVIPInfo($serialize, $gameid, $uid) {
+		$result = $this->exec(4, 12, array(
+			'serialize' => $serialize,
+			'gameid'    => $gameid,
+			'uid'       => $uid
+		));
+
+		return $result;
+	}
+
+	public function GameGetPlatformRecharge($serialize, $uid) {
+		$result = $this->exec(4, 13, array(
+			'serialize' => $serialize,
+			'uid'       => $uid
+		));
+
+		return $result;
+	}
+
+	public function GameServerRechargeNotice($aduid, $uid, $merid, $tranno, $amount, $type, $money) {
+		$result = $this->exec(4, 14, array(
+			'aduid'  => $aduid,
+			'uid'    => $uid,
+			'merid'  => $merid,
+			'tranno' => $tranno,
+			'amount' => $amount,
+			'type'   => $type,
+			'money'  => $money
+		));
+
+		return $result;
+	}
+
+	public function GameGetUser3rdInfo($serialize, $uid) {
+		$result = $this->exec(4, 15, array(
+			'serialize' => $serialize,
+			'uid'       => $uid
+		));
+
+		return $result;
+	}
+
+	public function GameAddictiveCheck($uid, $addictive) {
+		$result = $this->exec(4, 17, array(
+			'uid' => $uid
+			'addictive'  => $addictive,
+		));
+
+		return $result;
+	}
+
+	public function Game3rdPlatform($serialize, $type, $gameid, $userinfo = array()) {
+		$result = $this->exec(4, 18, array(
+			'serialize' => $serialize,
+			'type'      => $type,
+			'gameid'    => $gameid,
+			'userinfo'  => $userinfo
+		));
+
+		return $result;
+	}
+
+	public function GiftCreateGiftCode($serial, $gameid, $giftid, $usecount, $enabletime, $count, $len) {
 		$result = $this->exec(5, 0, array(
 			'serial'     => $serial,
 			'gameid'     => $gameid,
@@ -355,7 +564,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function CreateSpecifyGiftID($serial, $giftcode, $gameid, $giftid, $usecount, $enabletime) {
+	public function GiftCreateSpecialGiftCode($serial, $giftcode, $gameid, $giftid, $usecount, $enabletime) {
 		$result = $this->exec(5, 1, array(
 			'serial'     => $serial,
 			'giftcode'   => $giftcode,
@@ -368,7 +577,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function CheckGiftIDStatus($serial, $giftcode) {
+	public function GiftGetGiftCodeInfo($serial, $giftcode) {
 		$result = $this->exec(5, 2, array(
 			'serial'   => $serial,
 			'giftcode' => $giftcode
@@ -377,7 +586,7 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function UseGiftIDStatus($serial, $uid, $giftcode) {
+	public function GiftUseGiftCode($serial, $uid, $giftcode) {
 		$result = $this->exec(5, 3, array(
 			'serial'   => $serial,
 			'uid'      => $uid,
@@ -387,8 +596,8 @@ class CosGameAction extends CosApi {
 		return $result;
 	}
 
-	public function CreateSpecifyGiftcode($serial, $gameid, $giftid, $usecount, $enabletime, $len) {
-		$result = $this->exec(5, 3, array(
+	public function GiftCreateRndGiftCode($serial, $gameid, $giftid, $usecount, $enabletime, $len) {
+		$result = $this->exec(5, 4, array(
 			'serial'     => $serial,
 			'gameid'     => $gameid,
 			'giftid'     => $giftid,
