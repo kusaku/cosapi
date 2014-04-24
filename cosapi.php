@@ -9,10 +9,15 @@ class CosApi {
 	private $port;
 	private $username;
 	private $password;
-	private $storage;
 
 	private $socket;
 
+	private $rsa_key;
+	private $rsa_key_module;
+	private $rsa_key_public;
+
+	private $storage;
+	private $key;
 	private $flag = 0XFFFFFFFF;
 
 	private function encrypt($str) {
@@ -24,8 +29,7 @@ class CosApi {
 	}
 
 	private function get_rsa_key() {
-		static $rsa_key;
-		if (!isset($rsa_key)) {
+		if (!isset($this->rsa_key)) {
 			$config = array(
 				'digest_alg'       => 'sha512',
 				'private_key_bits' => 1024,
@@ -33,43 +37,38 @@ class CosApi {
 			);
 
 			// Create the private and public key
-			$rsa_key = openssl_pkey_new($config);
+			$this->rsa_key = openssl_pkey_new($config);
 		}
 
-		return $rsa_key;
+		return $this->rsa_key;
 	}
 
 	private function get_rsa_key_module() {
-		static $rsa_key_module;
-		if (!isset($rsa_key_module)) {
-			$datails        = openssl_pkey_get_details($this->get_rsa_key());
-			$rsa_key_module = gmp_strval(gmp_init('0x' . unpack('H*', $datails['rsa']['n'])[1]));
+		if (!isset($this->rsa_key_module)) {
+			$datails              = openssl_pkey_get_details($this->get_rsa_key());
+			$this->rsa_key_module = gmp_strval(gmp_init('0x' . unpack('H*', $datails['rsa']['n'])[1]));
 		}
 
-		return $rsa_key_module;
+		return $this->rsa_key_module;
 	}
 
 	private function get_rsa_key_public() {
-		static $rsa_key_public;
-		if (!isset($rsa_key_public)) {
-			$datails        = openssl_pkey_get_details($this->get_rsa_key());
-			$rsa_key_public = gmp_strval(gmp_init('0x' . unpack('H*', $datails['rsa']['e'])[1]));
+		if (!isset($this->rsa_key_public)) {
+			$datails              = openssl_pkey_get_details($this->get_rsa_key());
+			$this->rsa_key_public = gmp_strval(gmp_init('0x' . unpack('H*', $datails['rsa']['e'])[1]));
 		}
 
-		return $rsa_key_public;
+		return $this->rsa_key_public;
 	}
 
 	private function rsa_key($force = false) {
-		/** @var $key \DB\Jig\Mapper */
-		static $key;
-
-		if ($force || !$key) {
-			$key = $this->storage->load(array('@name=?', $this->name));
-			if ($force || !$key) {
+		if ($force || !$this->key) {
+			$this->key = $this->storage->load(array('@name=?', $this->name));
+			if ($force || !$this->key) {
 				$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()));
 				$packet  = json_encode(array('major' => 0, 'minor' => 1, 'payload' => $payload));
 
-				$this->flag = $flag = 0XFFFFFFFF;
+				$this->flag = 0XFFFFFFFF;
 
 				$this->write($packet);
 				$packet = $this->read();
@@ -78,18 +77,18 @@ class CosApi {
 
 				openssl_private_decrypt(base64_decode($payload->rsaencryptkey), $value, $this->get_rsa_key());
 
-				$key = $this->storage;
-				$key->insert();
-				$key->name  = $this->name;
-				$key->flag  = $payload->flag;
-				$key->value = $value;
-				$key->save();
+				$this->key = $this->storage;
+				$this->key->insert();
+				$this->key->name  = $this->name;
+				$this->key->flag  = $payload->flag;
+				$this->key->value = $value;
+				$this->key->save();
 			}
 
-			$this->flag = $key->flag;
+			$this->flag = $this->key->flag;
 		}
 
-		return $key->value;
+		return $this->key->value;
 	}
 
 	private function update_rsa_key() {

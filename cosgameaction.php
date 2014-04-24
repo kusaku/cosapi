@@ -532,8 +532,8 @@ class CosGameAction extends CosApi {
 
 	public function GameAddictiveCheck($uid, $addictive) {
 		$result = $this->exec(4, 17, array(
-			'uid' => $uid
-			'addictive'  => $addictive,
+			'uid'       => $uid,
+			'addictive' => $addictive
 		));
 
 		return $result;
