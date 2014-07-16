@@ -108,12 +108,12 @@ class CosApi {
 				))
 		);
 
-		if ($this instanceof CosGameAction) {
+		if ($this instanceof CosPlatformAction) {
 			$data['major'] = 1;
 			$data['minor'] = 13;
 		}
 
-		if ($this instanceof CosAdminAction) {
+		if ($this instanceof CosGameAction) {
 			$data['major'] = 0;
 			$data['minor'] = 3;
 		}
