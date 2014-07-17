@@ -685,7 +685,7 @@ class CosGameAction extends CosApi {
 	 * @param int $limit
 	 * @return mixed
 	 */
-	public function GiftServerMakeLimitCount($uid, $giftid, $server, $len, $count, $time, $limit) {
+	public function ActiveCodeServerMakeLimitCount($uid, $giftid, $server, $len, $count, $time, $limit) {
 		$result = $this->exec(104, 3, array(
 			'uid'    => $uid,
 			'giftid' => $giftid,
