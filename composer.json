@@ -1,7 +1,7 @@
 {
 	"name": "cosapi",
-	"description": "A powerful yet easy-to-use PHP micro-framework designed to help you build dynamic and robust Web applications - fast!",
-	"homepage": "http://fatfreeframework.com/",
+	"description": "City of Steam web management sockets API",
+	"homepage": "http://parograd.ru/",
 	"license": "GPL-3.0",
 	"require": {
 		"php": ">=5.3.0"

@@ -65,8 +65,8 @@ class CosApi {
 		if ($force || !$this->key) {
 			$this->key = $this->storage->load(array('@name=?', $this->name));
 			if ($force || !$this->key) {
-				$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()));
-				$packet  = json_encode(array('major' => 0, 'minor' => 1, 'payload' => $payload));
+				$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()), JSON_FORCE_OBJECT);
+				$packet  = json_encode(array('major' => 0, 'minor' => 1, 'payload' => $payload), JSON_FORCE_OBJECT);
 
 				$this->flag = 0XFFFFFFFF;
 
@@ -101,11 +101,7 @@ class CosApi {
 		$data = array(
 			'major'   => 0,
 			'minor'   => 0,
-			'payload' => json_encode(
-				array(
-					'uid'          => -1,
-					'webuniquekey' => $webuniquekey
-				))
+			'payload' => json_encode(array('uid' => -1, 'webuniquekey' => $webuniquekey), JSON_FORCE_OBJECT)
 		);
 
 		if ($this instanceof CosPlatformAction) {
@@ -118,7 +114,7 @@ class CosApi {
 			$data['minor'] = 3;
 		}
 
-		$packet = $this->encrypt(json_encode($data));
+		$packet = $this->encrypt(json_encode($data), JSON_FORCE_OBJECT);
 
 		$this->write($packet);
 		$packet = $this->read();
@@ -140,11 +136,11 @@ class CosApi {
 		$data = array(
 			'major'    => $major,
 			'minor'    => $minor,
-			'payload'  => json_encode($payload),
+			'payload'  => json_encode($payload, JSON_FORCE_OBJECT),
 			'authcode' => $authcode
 		);
 
-		$packet = $this->encrypt(json_encode($data));
+		$packet = $this->encrypt(json_encode($data), JSON_FORCE_OBJECT);
 
 		$this->write($packet);
 		$packet = $this->read();
