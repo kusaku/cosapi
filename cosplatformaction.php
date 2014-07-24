@@ -961,8 +961,8 @@ class CosPlatformAction extends CosApi {
 		return $result;
 	}
 
-	public function __construct($name, $cfg, $storage) {
-		parent::__construct($name, $cfg, $storage);
+	public function __construct($name, $cfg) {
+		parent::__construct($name, $cfg);
 	}
 }
 

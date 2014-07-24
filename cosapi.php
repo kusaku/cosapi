@@ -16,7 +16,6 @@ class CosApi {
 	private $rsa_key_module;
 	private $rsa_key_public;
 
-	private $storage;
 	private $key;
 	private $flag = 0XFFFFFFFF;
 
@@ -62,33 +61,32 @@ class CosApi {
 	}
 
 	private function rsa_key($force = false) {
-		if ($force || !$this->key) {
-			$this->key = $this->storage->load(array('@name=?', $this->name));
-			if ($force || !$this->key) {
-				$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()), JSON_FORCE_OBJECT);
-				$packet  = json_encode(array('major' => 0, 'minor' => 1, 'payload' => $payload), JSON_FORCE_OBJECT);
+		/** @var \Cache $cache */
+		$cache = \Cache::instance();
+		$hash  = "{$this->name}.cosapi";
+		if ($force || !$cache->exists($hash, $rsa_key)) {
+			$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()), JSON_FORCE_OBJECT);
+			$packet  = json_encode(array('major' => 0, 'minor' => 1, 'payload' => $payload), JSON_FORCE_OBJECT);
 
-				$this->flag = 0XFFFFFFFF;
+			$this->flag = 0XFFFFFFFF;
 
-				$this->write($packet);
-				$packet = $this->read();
+			$this->write($packet);
+			$packet = $this->read();
 
-				$payload = json_decode(json_decode($packet)->payload);
+			$payload = json_decode(json_decode($packet)->payload);
 
-				openssl_private_decrypt(base64_decode($payload->rsaencryptkey), $value, $this->get_rsa_key());
+			openssl_private_decrypt(base64_decode($payload->rsaencryptkey), $value, $this->get_rsa_key());
 
-				$this->key = $this->storage;
-				$this->key->insert();
-				$this->key->name  = $this->name;
-				$this->key->flag  = $payload->flag;
-				$this->key->value = $value;
-				$this->key->save();
-			}
+			$rsa_key          = array();
+			$rsa_key['flag']  = $payload->flag;
+			$rsa_key['value'] = $value;
 
-			$this->flag = $this->key->flag;
+			$cache->set($hash, $rsa_key, 86400);
 		}
 
-		return $this->key->value;
+		$this->flag = $rsa_key['flag'];
+
+		return $rsa_key['value'];
 	}
 
 	private function update_rsa_key() {
@@ -211,13 +209,12 @@ class CosApi {
 		}
 	}
 
-	public function __construct($name, $cfg, $storage) {
+	public function __construct($name, $cfg) {
 		$this->name     = $name;
 		$this->server   = $cfg['server'];
 		$this->port     = $cfg['port'];
 		$this->username = $cfg['username'];
 		$this->password = $cfg['password'];
-		$this->storage  = $storage;
 		$this->init();
 	}
 
