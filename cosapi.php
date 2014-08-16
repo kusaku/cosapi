@@ -16,15 +16,20 @@ class CosApi {
 	private $rsa_key_module;
 	private $rsa_key_public;
 
-	private $key;
 	private $flag = 0XFFFFFFFF;
 
 	private function encrypt($str) {
-		return bin2hex($str ^ str_pad('', strlen($str), hex2bin($this->rsa_key())));
+		if (strlen($str) != 0) {
+			return bin2hex($str ^ str_pad('', strlen($str), hex2bin($this->symm_key())));
+		}
+		throw new \Exception('String is null length');
 	}
 
-	private function decrypt($srt) {
-		return hex2bin($srt) ^ hex2bin(str_pad('', strlen($srt), $this->rsa_key()));
+	private function decrypt($str) {
+		if (ctype_xdigit($str) && strlen($str) % 2 == 0) {
+			return hex2bin($str) ^ hex2bin(str_pad('', strlen($str), $this->symm_key()));
+		}
+		throw new \Exception("String is not hexademical - $str");
 	}
 
 	private function get_rsa_key() {
@@ -44,8 +49,8 @@ class CosApi {
 
 	private function get_rsa_key_module() {
 		if (!isset($this->rsa_key_module)) {
-			$datails              = openssl_pkey_get_details($this->get_rsa_key());
-			$this->rsa_key_module = gmp_strval(gmp_init('0x' . unpack('H*', $datails['rsa']['n'])[1]));
+			$details              = openssl_pkey_get_details($this->get_rsa_key());
+			$this->rsa_key_module = gmp_strval(gmp_init('0x' . unpack('H*', $details['rsa']['n'])[1]));
 		}
 
 		return $this->rsa_key_module;
@@ -53,18 +58,18 @@ class CosApi {
 
 	private function get_rsa_key_public() {
 		if (!isset($this->rsa_key_public)) {
-			$datails              = openssl_pkey_get_details($this->get_rsa_key());
-			$this->rsa_key_public = gmp_strval(gmp_init('0x' . unpack('H*', $datails['rsa']['e'])[1]));
+			$details              = openssl_pkey_get_details($this->get_rsa_key());
+			$this->rsa_key_public = gmp_strval(gmp_init('0x' . unpack('H*', $details['rsa']['e'])[1]));
 		}
 
 		return $this->rsa_key_public;
 	}
 
-	private function rsa_key($force = false) {
+	private function symm_key($force = false) {
 		/** @var \Cache $cache */
 		$cache = \Cache::instance();
 		$hash  = "{$this->name}.cosapi";
-		if ($force || !$cache->exists($hash, $rsa_key)) {
+		if ($force || !$cache->exists($hash, $symm_key)) {
 			$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()), JSON_FORCE_OBJECT);
 			$packet  = json_encode(array('major' => 0, 'minor' => 1, 'payload' => $payload), JSON_FORCE_OBJECT);
 
@@ -77,20 +82,20 @@ class CosApi {
 
 			openssl_private_decrypt(base64_decode($payload->rsaencryptkey), $value, $this->get_rsa_key());
 
-			$rsa_key          = array();
-			$rsa_key['flag']  = $payload->flag;
-			$rsa_key['value'] = $value;
+			$symm_key          = array();
+			$symm_key['flag']  = $payload->flag;
+			$symm_key['value'] = $value;
 
-			$cache->set($hash, $rsa_key, 86400);
+			$cache->set($hash, $symm_key, 86400);
 		}
 
-		$this->flag = $rsa_key['flag'];
+		$this->flag = $symm_key['flag'];
 
-		return $rsa_key['value'];
+		return $symm_key['value'];
 	}
 
-	private function update_rsa_key() {
-		$this->rsa_key(true);
+	private function update_symm_key() {
+		$this->symm_key(true);
 	}
 
 	protected function get_authcode() {
@@ -127,7 +132,7 @@ class CosApi {
 		try {
 			$authcode = $this->get_authcode();
 		} catch (\Exception $e) {
-			$this->update_rsa_key();
+			$this->update_symm_key();
 			$authcode = $this->get_authcode();
 		}
 

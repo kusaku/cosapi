@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Aks
- * Date: 28.02.14
- * Time: 13:17
- */
 
 namespace COS;
 
