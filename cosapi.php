@@ -70,7 +70,7 @@ class CosApi {
 		$cache = \Cache::instance();
 		$hash  = "{$this->name}.cosapi";
 		if ($force || !$cache->exists($hash, $symm_key)) {
-			$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()), JSON_FORCE_OBJECT);
+			$payload = json_encode(array('rsamodule' => $this->get_rsa_key_module(), 'rsapublic' => $this->get_rsa_key_public()));
 			$packet  = json_encode(array('major' => 0, 'minor' => 1, 'payload' => $payload), JSON_FORCE_OBJECT);
 
 			$this->flag = 0XFFFFFFFF;
@@ -104,7 +104,7 @@ class CosApi {
 		$data = array(
 			'major'   => 0,
 			'minor'   => 0,
-			'payload' => json_encode(array('uid' => -1, 'webuniquekey' => $webuniquekey), JSON_FORCE_OBJECT)
+			'payload' => json_encode(array('uid' => -1, 'webuniquekey' => $webuniquekey))
 		);
 
 		if ($this instanceof CosPlatformAction) {
@@ -139,7 +139,7 @@ class CosApi {
 		$data = array(
 			'major'    => $major,
 			'minor'    => $minor,
-			'payload'  => json_encode($payload, JSON_FORCE_OBJECT),
+			'payload'  => json_encode($payload),
 			'authcode' => $authcode
 		);
 
