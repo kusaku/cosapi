@@ -559,6 +559,152 @@ class CosGameAction extends CosApi {
 	}
 
 	/**
+	 * @param int $announcementType
+	 * @return mixed
+	 */
+	public function GMBatchDeleteAnnouncementByType($announcementType) {
+		$result = $this->exec(101, 31, array(
+			'announcementType' => $announcementType
+		));
+
+		return $result;
+	}
+
+	/**
+	 * @param int $announcementType
+	 * @return mixed
+	 */
+	public function GMBacthDeleteRewardConditionByType($announcementType) {
+		$result = $this->exec(101, 32, array(
+			'announcementType' => $announcementType
+		));
+
+		return $result;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function GMGetArtifactRebate() {
+		$result = $this->exec(101, 33, array());
+
+		return $result;
+	}
+
+	/**
+	 * @param float $rebate
+	 * @param int $startTime
+	 * @param int $endTime
+	 * @return mixed
+	 */
+	public function GMSetArtifactRebate($rebate, $startTime, $endTime) {
+		$result = $this->exec(101, 34, array(
+			'rebate'    => $rebate,
+			'startTime' => $startTime,
+			'endTime'   => $endTime,
+		));
+
+		return $result;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function GMQueryElectrumShopRebate() {
+		$result = $this->exec(101, 35, array());
+
+		return $result;
+	}
+
+	/**
+	 * @param int $id
+	 * @param int $rebate
+	 * @param string $startTime
+	 * @param string $endTime
+	 * @return mixed
+	 */
+	public function GMUpdateElectrumShopRebate($id, $rebate, $startTimeStr, $endTimeStr) {
+		$result = $this->exec(101, 36, array(
+			'id'           => $id,
+			'rebate'       => $rebate,
+			'startTimeStr' => $startTimeStr,
+			'endTimeStr'   => $endTimeStr,
+		));
+
+		return $result;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function GMQueryElectrumShopHotSellerItem() {
+		$result = $this->exec(101, 37, array());
+
+		return $result;
+	}
+
+	/**
+	 * @param int $id
+	 * @param int $eId
+	 * @param int $quality
+	 * @param int $price
+	 * @param int $rebatePrice
+	 * @param int $maxBuyCount
+	 * @param int $maxQuantity
+	 * @param int $minQuantity
+	 * @param string $startTimeStr
+	 * @param string $endTimeStr
+	 * @param int $enableCharacterElectrum
+	 * @param int $randomProperty
+	 * @param int $number
+	 * @return mixed
+	 */
+	public function GMUpdateElectrumShopHotSellerItem($id, $eId, $quality, $price, $rebatePrice, $maxBuyCount, $maxQuantity, $minQuantity, $startTimeStr, $endTimeStr,
+	                                                  $enableCharacterElectrum, $randomProperty, $number) {
+		$result = $this->exec(101, 38, array(
+			'id'                      => $id,
+			'eId'                     => $eId,
+			'quality'                 => $quality,
+			'price'                   => $price,
+			'rebatePrice'             => $rebatePrice,
+			'maxBuyCount'             => $maxBuyCount,
+			'maxQuantity'             => $maxQuantity,
+			'minQuantity'             => $minQuantity,
+			'startTimeStr'            => $startTimeStr,
+			'endTimeStr'              => $endTimeStr,
+			'enableCharacterElectrum' => $enableCharacterElectrum,
+			'randomProperty'          => $randomProperty,
+			'number'                  => $number
+		));
+
+		return $result;
+	}
+
+	/**
+	 * @param int $id
+	 * @return mixed
+	 */
+	public function GMDeleteElectrumShopRebate($id) {
+		$result = $this->exec(101, 39, array(
+			'id' => $id
+		));
+
+		return $result;
+	}
+
+	/**
+	 * @param int $id
+	 * @return mixed
+	 */
+	public function GMDeleteElectrumShopHotSellerItem($id) {
+		$result = $this->exec(101, 40, array(
+			'id' => $id
+		));
+
+		return $result;
+	}
+
+	/**
 	 * @return mixed
 	 */
 	public function GameParamGetParamList() {
