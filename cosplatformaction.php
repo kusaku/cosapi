@@ -317,14 +317,14 @@ class CosPlatformAction extends CosApi {
 
 	/**
 	 * @param int $uid
-	 * @param string fromip
+	 * @param string $fromIP
 	 * @param string $token
 	 * @return object
 	 */
-	public function UserUserLogout($uid, $fromip, $token) {
+	public function UserUserLogout($uid, $fromIP, $token) {
 		$result = $this->exec(1, 17, array(
 			'uid'    => $uid,
-			'fromip' => $fromip,
+			'fromIP' => $fromIP,
 			'token'  => $token
 		));
 
@@ -386,16 +386,16 @@ class CosPlatformAction extends CosApi {
 	/**
 	 * @param int $uid
 	 * @param string $token
-	 * @param string $fromip
+	 * @param string $fromIP
 	 * @param string $question
 	 * @param string $answer
 	 * @return object
 	 */
-	public function UserModifySecurity($uid, $token, $fromip, $question, $answer) {
+	public function UserModifySecurity($uid, $token, $fromIP, $question, $answer) {
 		$result = $this->exec(1, 21, array(
 			'uid'      => $uid,
 			'token'    => $token,
-			'fromip'   => $fromip,
+			'fromIP'   => $fromIP,
 			'question' => $question,
 			'answer'   => $answer
 		));
