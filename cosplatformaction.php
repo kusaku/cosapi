@@ -408,10 +408,10 @@ class CosPlatformAction extends CosApi {
 	 * @param string $fromip
 	 * @return object
 	 */
-	public function UserGetInfoByEMail($email, $fromip) {
+	public function UserGetInfoByEMail($email, $fromIP) {
 		$result = $this->exec(1, 22, array(
 			'email'  => $email,
-			'fromip' => $fromip
+			'fromIP' => $fromIP
 		));
 
 		return $result;
